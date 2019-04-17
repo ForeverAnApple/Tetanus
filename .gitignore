@@ -12,3 +12,13 @@ Cargo.lock
 #Added by cargo
 #already existing elements are commented out
 /target
+
+#Paper
+paper/*.log
+paper/*.aux
+paper/*.fls
+paper/*.gz
+paper/*.fdb_latexmk
+paper/*.pdf
+
+*.swp
