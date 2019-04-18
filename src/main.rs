@@ -70,7 +70,7 @@ fn main() -> Result<(), io::Error> {
 fn analyze(keys: &Vec<Integer>) {
     println!("Starting analysis on {} keys...", keys.len());
     let prod_tree = product_tree(&keys);
-    println!("Generated producted tree: {:#?}", prod_tree);
+    //println!("Generated producted tree: {:#?}", prod_tree);
 }
 
 fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
@@ -86,6 +86,7 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
             let mut prod_buf = Integer::new();
             let incomplete = &leaf_layer[i] * &leaf_layer[i+1];
             prod_buf.assign(incomplete);
+            println!("Sig bits: {}", prod_buf.significant_bits());
             temp_layer.push(prod_buf);
         }
         leaf_layer = temp_layer.to_vec();

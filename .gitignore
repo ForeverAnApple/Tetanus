@@ -22,3 +22,6 @@ paper/*.fdb_latexmk
 paper/*.pdf
 
 *.swp
+
+# Please don't send this 166.2 MB file lmao
+big_keys*
