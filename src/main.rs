@@ -73,6 +73,7 @@ fn analyze(keys: &Vec<Integer>) {
     //println!("Generated producted tree: {:#?}", prod_tree);
 }
 
+// Using a product tree here will speed up the Batch-GCD significantly. O(lg n) instead of O(n).
 fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
     let mut prods: Vec<Vec<Integer>> = Vec::new();
     let mut leaf_layer = keys.to_vec();
