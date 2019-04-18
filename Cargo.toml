@@ -5,3 +5,4 @@ authors = ["Daiwei Chen <kinbd8@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+rug = "1.3.0"
