@@ -71,6 +71,8 @@ fn analyze(keys: &Vec<Integer>) {
     println!("Starting analysis on {} keys...", keys.len());
     let prod_tree = product_tree(&keys);
     //println!("Generated producted tree: {:#?}", prod_tree);
+    let rem_tree = remainder_tree(&prod_tree, &keys);
+    println!("Generated remainder tree: {:?}", rem_tree);
 }
 
 // Using a product tree here will speed up the Batch-GCD significantly. O(lg n) instead of O(n).
@@ -95,4 +97,23 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
     }
     
     prods
+}
+
+fn remainder_tree(prod_tree: &Vec<Vec<Integer>>, keys: &Vec<Integer>) -> Vec<Integer>{
+    let mut temp_ptree = prod_tree.to_vec();
+    let mut rems: Vec<Integer> = vec![Integer::new(); keys.len()];
+    println!("Size of rem: {}", rems.len());
+    let rootnum = temp_ptree.pop().unwrap().pop().unwrap();
+    rems[0] = rootnum;
+    for prod in temp_ptree.iter().rev(){
+        //println!("Rems: {:?}", rems);
+        for i in 0..prod.len() {
+            let mut ppow = Integer::new();
+            ppow.assign((&prod[i]).pow(2));
+            let incomplete = &rems[i/2] % ppow;
+            &rems[i].assign(incomplete);
+        }
+    }
+
+    rems
 }

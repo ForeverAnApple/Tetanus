@@ -25,3 +25,9 @@ paper/*.pdf
 
 # Please don't send this 166.2 MB file lmao
 big_keys*
+
+gcd_exmp.py
+
+# Emacs stuff
+src/#*
+src/.#
