@@ -70,9 +70,11 @@ fn main() -> Result<(), io::Error> {
 fn analyze(keys: &Vec<Integer>) {
     println!("Starting analysis on {} keys...", keys.len());
     let prod_tree = product_tree(&keys);
-    //println!("Generated producted tree: {:#?}", prod_tree);
+    println!("Generated producted tree: {:#?}", prod_tree);
     let rem_tree = remainder_tree(&prod_tree, &keys);
     println!("Generated remainder tree: {:?}", rem_tree);
+    let bgcd = batch_gcd(&rem_tree, &keys);
+    println!("Final Batch-GCD: {:?}", bgcd);
 }
 
 // Using a product tree here will speed up the Batch-GCD significantly. O(lg n) instead of O(n).
@@ -83,15 +85,21 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
     
     while leaf_layer.len() > 1 {
         let mut temp_layer = Vec::new();
-        for i in 0..((leaf_layer.len()+1)/2) {
+        for i in 0..((leaf_layer.len())/2) {
             // Using a buffer here due to rug memory allocation optimizations and issues with floats
             // and more complex numbers
             let mut prod_buf = Integer::new();
             let incomplete = &leaf_layer[i] * &leaf_layer[i+1];
             prod_buf.assign(incomplete);
-            println!("Sig bits: {}", prod_buf.significant_bits());
-            temp_layer.push(prod_buf);
+            // println!("Sig bits: {}", prod_buf.significant_bits());
+            temp_layer.push(prod_buf);    
         }
+        if leaf_layer.len() > temp_layer.len() {
+            //let mut last = Integer::new();
+            //last.assign(&leaf_layer[&leaf_layer.len()-1]);
+            temp_layer.push(leaf_layer.pop().unwrap());
+        }
+            
         leaf_layer = temp_layer.to_vec();
         prods.push(leaf_layer.to_vec());
     }
@@ -99,11 +107,12 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
     prods
 }
 
-fn remainder_tree(prod_tree: &Vec<Vec<Integer>>, keys: &Vec<Integer>) -> Vec<Integer>{
+fn remainder_tree(prod_tree: &Vec<Vec<Integer>>, keys: &Vec<Integer>) -> Vec<Integer> {
     let mut temp_ptree = prod_tree.to_vec();
-    let mut rems: Vec<Integer> = vec![Integer::new(); keys.len()];
-    println!("Size of rem: {}", rems.len());
+    let mut rems: Vec<Integer> = Vec::new(); //vec![Integer::new(); keys.len()];
     let rootnum = temp_ptree.pop().unwrap().pop().unwrap();
+    /*
+    //println!("Size of rem: {}", rems.len());
     rems[0] = rootnum;
     for prod in temp_ptree.iter().rev(){
         //println!("Rems: {:?}", rems);
@@ -114,6 +123,24 @@ fn remainder_tree(prod_tree: &Vec<Vec<Integer>>, keys: &Vec<Integer>) -> Vec<Int
             &rems[i].assign(incomplete);
         }
     }
-
+     */
+    for key in keys {
+        let mut modu = Integer::new();
+        modu.assign(&rootnum % key);
+        rems.push(modu);
+    }
     rems
+}
+
+fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
+    let mut bgcd: Vec<Integer> = Vec::new();
+
+    for i in 0..keys.len() {
+        let mut div = Integer::new();
+        div.assign(&rem_tree[i] / &keys[i]);
+        let gcd = div.gcd(&keys[i]);
+        bgcd.push(gcd);
+    }
+    
+    bgcd
 }
