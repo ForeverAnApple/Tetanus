@@ -23,7 +23,11 @@
 
 \section{Background and Related Work}
 
+
 \section{RSA}
+Let's quickly go over RSA, how it is possible to break it. RSA is usually cryptographically secure due to the complexity and difficulty to factor very, very large prime numbers. However, within the Public Component of RSA contains $N$, a result of the product between two (usually) large primes $p$ and $q$. However, if one could efficiently calcualte $p$ and $q$ from $N$, then it will be possible to reconstruct a RSA Private key. \\
+\\
+This means it is possible to perform Man In the Middle attacks against the cracked RSA Private Key target. Decrypt TLS encrypted traffic, or even authenticate SSH using the public key as well. Essentially, you become your target.
 
 \section{Batch GCD}
 
