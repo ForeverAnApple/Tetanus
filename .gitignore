@@ -31,3 +31,7 @@ gcd_exmp.py
 # Emacs stuff
 src/#*
 src/.#
+
+# GCD and Vulnerable output
+*.gcd
+*.vuln

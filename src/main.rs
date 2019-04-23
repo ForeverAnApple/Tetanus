@@ -17,9 +17,12 @@
  */
 
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, LineWriter};
+use std::io::prelude::*;
 use std::env;
 use rug::{Assign, Integer, ops::Pow}; // big numbers
+use std::time::SystemTime;
+use std::cmp::Ordering;
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
@@ -55,26 +58,72 @@ fn main() -> Result<(), io::Error> {
     
     // Load all the hex keys into rug
     let mut rug_keys: Vec<Integer> = Vec::new();
-    for key in input_keys{
+    for key in &input_keys{
         let mut parsed = Integer::new();
         parsed.assign(Integer::parse_radix(key, 16).unwrap());
         // println!("Parsing {} into {:?}", key, &parsed);
         rug_keys.push(parsed);
     }
-    
-    analyze(&rug_keys);
+
+    //println!("Beginning modulus: {:?}", rug_keys);
+    let start = SystemTime::now();
+    let bgcd = analyze(&rug_keys);
+    let time_taken = start.elapsed().unwrap();
+    let (vgcds, vulnerable) = output_gcds(&bgcd, &input_keys);
+    //println!("Valid GCDS: {:?}\n Vuln Moduli: {:?}", vgcds, vulnerable);
+    if vgcds.len() != 0 {
+        println!("Found {} Total Vulnerable Moduli", vgcds.len());
+        output_files(&vgcds, &vulnerable, &args[1]);
+    }
+    println!("Analysis stage took {} seconds",
+             time_taken.as_secs() as f64 + time_taken.subsec_nanos() as f64 * 1e-9);
     
     Ok(())
 }
 
-fn analyze(keys: &Vec<Integer>) {
+fn output_files(gcds: &Vec<Integer>, vulns: &Vec<String>, infile: &String) -> std::io::Result<()> {
+    println!("Writing to files...");
+    let gcdfilename = infile.clone() + ".gcd";
+    let vulfilename = infile.clone() + ".vuln";
+    println!("GCD Filename: {}\nVulnerable Moduli Filename: {}", gcdfilename, vulfilename);
+    
+    let gcdfile = File::create(gcdfilename)?;
+    let mut gcdfile = LineWriter::new(gcdfile);
+    let vulfile = File::create(vulfilename)?;
+    let mut vulfile = LineWriter::new(vulfile);
+    
+    for (gcd, vuln) in gcds.iter().zip(vulns.iter()) {
+        gcdfile.write_all((gcd.to_string_radix(16) + "\n").as_bytes())?;
+        vulfile.write_all((vuln.clone() + "\n").as_bytes())?;
+    }
+
+    gcdfile.flush()?;
+    vulfile.flush()?;
+    println!("All done! Phew!");
+    Ok(())
+}
+
+fn output_gcds(gcds: &Vec<Integer>, moduli: &Vec<String>) -> (Vec<Integer>, Vec<String>){
+    let mut valid_gcds: Vec<Integer> = Vec::new();
+    let mut vuln: Vec<String> = Vec::new();
+    for (i, gcd) in gcds.iter().enumerate() {
+        if gcd.cmp(&Integer::from(1)) != Ordering::Equal {
+            valid_gcds.push(Integer::from(gcd));
+            vuln.push((&moduli[i]).clone());
+        }
+    }
+
+    (valid_gcds, vuln)
+}
+
+fn analyze(keys: &Vec<Integer>) -> Vec<Integer>{
     println!("Starting analysis on {} keys...", keys.len());
     let prod_tree = product_tree(&keys);
-    println!("Generated producted tree: {:#?}", prod_tree);
+    //println!("Generated producted tree: {:?}", prod_tree);
     let rem_tree = remainder_tree(&prod_tree, &keys);
-    println!("Generated remainder tree: {:?}", rem_tree);
-    let bgcd = batch_gcd(&rem_tree, &keys);
-    println!("Final Batch-GCD: {:?}", bgcd);
+    //println!("Generated remainder tree: {:?}", rem_tree);
+    batch_gcd(&rem_tree, &keys)
+
 }
 
 // Using a product tree here will speed up the Batch-GCD significantly. O(lg n) instead of O(n).
@@ -82,25 +131,25 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
     let mut prods: Vec<Vec<Integer>> = Vec::new();
     let mut leaf_layer = keys.to_vec();
     prods.push(leaf_layer.to_vec());
-    
     while leaf_layer.len() > 1 {
         let mut temp_layer = Vec::new();
         for i in 0..((leaf_layer.len())/2) {
             // Using a buffer here due to rug memory allocation optimizations and issues with floats
             // and more complex numbers
             let mut prod_buf = Integer::new();
-            let incomplete = &leaf_layer[i] * &leaf_layer[i+1];
-            prod_buf.assign(incomplete);
+            prod_buf.assign(&leaf_layer[i*2] * &leaf_layer[i*2+1]);
             // println!("Sig bits: {}", prod_buf.significant_bits());
             temp_layer.push(prod_buf);    
         }
-        if leaf_layer.len() > temp_layer.len() {
+        
+        if leaf_layer.len() % 2 == 1{
             //let mut last = Integer::new();
             //last.assign(&leaf_layer[&leaf_layer.len()-1]);
             temp_layer.push(leaf_layer.pop().unwrap());
         }
-            
+        
         leaf_layer = temp_layer.to_vec();
+        //println!("{:?}", leaf_layer);
         prods.push(leaf_layer.to_vec());
     }
     
@@ -109,26 +158,29 @@ fn product_tree(keys: &Vec<Integer>) -> Vec<Vec<Integer>> {
 
 fn remainder_tree(prod_tree: &Vec<Vec<Integer>>, keys: &Vec<Integer>) -> Vec<Integer> {
     let mut temp_ptree = prod_tree.to_vec();
-    let mut rems: Vec<Integer> = Vec::new(); //vec![Integer::new(); keys.len()];
+    let mut rems: Vec<Integer> = vec![Integer::new(); keys.len()];
     let rootnum = temp_ptree.pop().unwrap().pop().unwrap();
-    /*
+    
     //println!("Size of rem: {}", rems.len());
     rems[0] = rootnum;
-    for prod in temp_ptree.iter().rev(){
-        //println!("Rems: {:?}", rems);
-        for i in 0..prod.len() {
+    for prod in temp_ptree.iter().rev(){        
+        //println!("prod: {:?}", prod);
+        for i in (0..prod.len()).rev() {
+            //println!("Rems at {}: {:?}", i/2, rems);
             let mut ppow = Integer::new();
             ppow.assign((&prod[i]).pow(2));
             let incomplete = &rems[i/2] % ppow;
             &rems[i].assign(incomplete);
+            //println!("{} % {} ** 2 = {}", &rems[i/2], &prod[i], &rems[i]);
         }
     }
-     */
+    /*
     for key in keys {
         let mut modu = Integer::new();
         modu.assign(&rootnum % key);
         rems.push(modu);
     }
+    */
     rems
 }
 
