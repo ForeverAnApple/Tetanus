@@ -42,9 +42,28 @@ fn main() -> Result<(), io::Error> {
                 vec!["775".into(), "b6b".into(), "123".into(), "cd".into(), "3dd".into(),
                      "3e".into(), "1c3".into(), "797".into(), "437".into(), "973".into()];
             println!("Testing keys: {:?}", input_keys);
+
+            // Load all the hex keys into rug
+            let mut rug_keys: Vec<Integer> = Vec::new();
+            for key in &input_keys{
+                let mut parsed = Integer::new();
+                parsed.assign(Integer::parse_radix(key, 16).unwrap());
+                // println!("Parsing {} into {:?}", key, &parsed);
+                rug_keys.push(parsed);
+            }
+
+            println!("Running Batch-GCD on {:?}", rug_keys);
+            let bgcd = analyze(&rug_keys);
+            println!("Final GCDs: {:?}", bgcd);
+
+            return Ok(());
         }
         "benchmark" => {
             println!("Starting Benchmark...");
+
+            
+            
+            return Ok(());
         }
         _ => {
             // the ? syntax is like a try catch loop, it's similar to the rust macro try!()
@@ -74,11 +93,25 @@ fn main() -> Result<(), io::Error> {
     if vgcds.len() != 0 {
         println!("Found {} Total Vulnerable Moduli", vgcds.len());
         output_files(&vgcds, &vulnerable, &args[1]);
+    } else {
+        println!("No vulnerable keys found! :(");
     }
     println!("Analysis stage took {} seconds",
              time_taken.as_secs() as f64 + time_taken.subsec_nanos() as f64 * 1e-9);
     
     Ok(())
+}
+
+// This function takes in a vector of Ns to randomly generate n numbers to benchmark batch-gcd
+fn benchmark(Ns: &Vec<i32>) -> Vec<i32> {
+    let mut benches: Vec<i32> = Vec::new();
+    
+    for n in Ns {
+        let mut rand_hexes: Vec<String> = Vec::new();
+        
+    }
+
+    benches
 }
 
 fn output_files(gcds: &Vec<Integer>, vulns: &Vec<String>, infile: &String) -> std::io::Result<()> {
