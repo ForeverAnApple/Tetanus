@@ -53,7 +53,7 @@ fn main() -> Result<(), io::Error> {
             }
 
             println!("Running Batch-GCD on {:?}", rug_keys);
-            let bgcd = analyze(&rug_keys);
+            let bgcd = analyze(&rug_keys, true);
             println!("Final GCDs: {:?}", bgcd);
 
             return Ok(());
@@ -92,7 +92,7 @@ fn main() -> Result<(), io::Error> {
 
     //println!("Beginning modulus: {:?}", rug_keys);
     let start = SystemTime::now();
-    let bgcd = analyze(&rug_keys);
+    let bgcd = analyze(&rug_keys, false);
     let time_taken = start.elapsed().unwrap();
     let (vgcds, vulnerable) = output_gcds(&bgcd, &input_keys);
     //println!("Valid GCDS: {:?}\n Vuln Moduli: {:?}", vgcds, vulnerable);
@@ -155,12 +155,14 @@ fn output_gcds(gcds: &Vec<Integer>, moduli: &Vec<String>) -> (Vec<Integer>, Vec<
     (valid_gcds, vuln)
 }
 
-fn analyze(keys: &Vec<Integer>) -> Vec<Integer>{
+fn analyze(keys: &Vec<Integer>, test: bool) -> Vec<Integer>{
     println!("Starting analysis on {} keys...", keys.len());
     let prod_tree = product_tree(&keys);
-    //println!("Generated producted tree: {:?}", prod_tree);
     let rem_tree = remainder_tree(&prod_tree, &keys);
-    //println!("Generated remainder tree: {:?}", rem_tree);
+    if test {
+        println!("Generated producted tree: {:#?}", prod_tree);
+        println!("Generated remainder tree: {:?}", rem_tree);
+    }
     batch_gcd(&rem_tree, &keys)
 
 }
