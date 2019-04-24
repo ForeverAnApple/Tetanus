@@ -65,12 +65,12 @@ fn main() -> Result<(), io::Error> {
             
             return Ok(());
         }
-	"recreate" => {
-	}
-	"keyTest" => {
-	    recreate_rsa("1090660992520643446103273789680343", "1162435056374824133712043309728653", "65537");
-	    return Ok(());
-	}
+	      "recreate" => {
+	      }
+	      "keyTest" => {
+	          recreate_rsa("1090660992520643446103273789680343", "1162435056374824133712043309728653", "65537");
+	          return Ok(());
+	      }
         _ => {
             // the ? syntax is like a try catch loop, it's similar to the rust macro try!()
             // Using a BufReader in case of very large files
