@@ -20,7 +20,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, LineWriter};
 use std::io::prelude::*;
 use std::env;
-use rug::{Assign, Integer, ops::Pow}; // big numbers
+use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, DivFrom, AddFrom, RemFrom}}; // big numbers
 use std::time::SystemTime;
 use std::cmp::Ordering;
 
@@ -46,6 +46,12 @@ fn main() -> Result<(), io::Error> {
         "benchmark" => {
             println!("Starting Benchmark...");
         }
+	"recreate" => {
+	}
+	"keyTest" => {
+	    recreate_rsa("1090660992520643446103273789680343", "1162435056374824133712043309728653", "65537");
+	    return Ok(());
+	}
         _ => {
             // the ? syntax is like a try catch loop, it's similar to the rust macro try!()
             // Using a BufReader in case of very large files
@@ -195,4 +201,47 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
     }
     
     bgcd
+}
+
+fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
+	let mut n = Integer::new();
+	let mut p = Integer::new();
+	let mut q = Integer::new();
+	let mut e = Integer::new();
+
+	n.assign(Integer::parse(stringP).unwrap());
+	p.assign(Integer::parse(stringP).unwrap());
+	q.assign(Integer::parse(stringQ).unwrap());
+	e.assign(Integer::parse(encryption).unwrap());
+
+  	let mut phi=Integer::from(1);
+  	let mut p2=Integer::from(1);
+  	let mut q2=Integer::from(1);
+
+  	n.mul_from(&q);
+ 	e.add_from(0);
+
+ 	println!("n: {:x}", n);
+  	println!("e: {:x}", e);
+
+  	phi.sub_from(&p);
+  	p2.sub_from(&p);
+  	q2.sub_from(&q);
+ 	phi.mul_from(&q2);
+	let mut d=Integer::from(e);
+	d.invert_mut(&phi);
+
+	println!("d: {:x}", d);
+
+	println!("p: {:x}", p);
+  	println!("q: {:x}", q);
+  	
+  	p2.rem_from(&d);
+  	q2.rem_from(&d);
+  	println!("exponent1: {:x}", p2);
+  	println!("exponent2: {:x}", q2);
+
+  	let expo = Integer::from(-1);
+  	let power = q.pow_mod(&expo, &p).unwrap();
+  	println!("coefficient: {:?}", power);
 }
