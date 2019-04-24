@@ -69,6 +69,7 @@ fn main() -> Result<(), io::Error> {
 	      }
 	      "keyTest" => {
 	          recreate_rsa("1090660992520643446103273789680343", "1162435056374824133712043309728653", "65537");
+                  recreate_rsa("13188561715320670649980058508476937575420932981817182290137079231671393627992273609428765926756863372112632409435820759987478412106280802494610337777961169", "9869736251765338993559973095861800023798699503010698782849009018533778193969885656418441889800662183510264452340003785864584329793753382298493793447912119", "65537");
 	          return Ok(());
 	      }
         _ => {
@@ -239,6 +240,10 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
 }
 
 fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
+    println!("asn1=SEQUENCE:private_key");
+    println!("[private_key]");
+    println!("version=INTEGER:0");
+
 	let mut n = Integer::new();
 	let mut p = Integer::new();
 	let mut q = Integer::new();
@@ -256,8 +261,8 @@ fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
   	n.mul_from(&q);
  	e.add_from(0);
 
- 	println!("n: {:x}", n);
-  	println!("e: {:x}", e);
+ 	println!("n=INTEGER:0x{:x}", n);
+  	println!("e=INTEGER:0x{:x}", e);
 
   	phi.sub_from(&p);
   	p2.sub_from(&p);
@@ -266,17 +271,17 @@ fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
 	let mut d=Integer::from(e);
 	d.invert_mut(&phi);
 
-	println!("d: {:x}", d);
+	println!("d=INTEGER:0x{:x}", d);
 
-	println!("p: {:x}", p);
-  	println!("q: {:x}", q);
+	println!("p=INTEGER:0x{:x}", p);
+  	println!("q=INTEGER:0x{:x}", q);
   	
   	p2.rem_from(&d);
   	q2.rem_from(&d);
-  	println!("exponent1: {:x}", p2);
-  	println!("exponent2: {:x}", q2);
+  	println!("exp1=INTEGER:0x{:x}", p2);
+  	println!("exp2=INTEGER:0x{:x}", q2);
 
   	let expo = Integer::from(-1);
   	let power = q.pow_mod(&expo, &p).unwrap();
-  	println!("coefficient: {:?}", power);
+  	println!("coeff=INTEGER:0x{:x}", power);
 }
