@@ -98,18 +98,20 @@ fn main() -> Result<(), io::Error> {
                         nbuf.read_line(&mut buf);
                     }
                     buf.pop();
+                    let mut strN:&str = &buf;
 
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
                     let mut buf2 = String::new();
                     let mut pbuf = BufReader::new(p);
                     pbuf.read_line(&mut buf2);
                     for i in 0..*line {
-                        buf.clear();
+                        buf2.clear();
                         pbuf.read_line(&mut buf2);
                     }
                     buf2.pop();
-                    println!("{:?}", buf2);
-                    //recreate_rsa(buf, buf2, e);
+                    let mut strP:&str = &buf2;
+
+                    recreate_rsa(&strN, &strP, e);
 
                     return Ok(());
                 }
@@ -129,18 +131,20 @@ fn main() -> Result<(), io::Error> {
                         nbuf.read_line(&mut buf);
                     }
                     buf.pop();
+                    let mut strN:&str = &buf;
 
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
                     let mut buf2 = String::new();
                     let mut pbuf = BufReader::new(p);
                     pbuf.read_line(&mut buf2);
                     for i in 0..*line {
-                        buf.clear();
+                        buf2.clear();
                         pbuf.read_line(&mut buf2);
                     }
                     buf2.pop();
+                    let mut strP:&str = &buf2;
 
-                    //recreate_rsa(buf, buf2, e);
+                    recreate_rsa(&strN, &strP, e);
                       
                     return Ok(());
                 }
