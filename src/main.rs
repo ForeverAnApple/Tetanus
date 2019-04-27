@@ -106,7 +106,7 @@ fn main() -> Result<(), io::Error> {
         }
 
         "keyTest" => {
-           // println!("Testing key regen with hardcoded values...");
+            println!("Testing key regen with hardcoded values...");
             recreate_rsa("d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9", "d38dfcb671f1a880b9457de540c6bd2ba4c2eba55139d51d6696ddd2f4306343496de72a01a45bbf302b7585ab631fe09ea223e155b7a4fd4578cb8bde2f9031","10001");
             return Ok(());
         }
@@ -313,7 +313,7 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
 
 fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
     let mut f = File::create("recreation.txt").expect("Error: Unable to create file");
-//    let mut cmd = Command::new();
+    println!("Creating file recreation.txt to write key values to");
 
     f.write_all("asn1=SEQUENCE:private_key\n".as_bytes()).expect("Error: Unable to write data");
     f.write_all("[private_key]\n".as_bytes()).expect("Error: Unable to write data");
@@ -369,4 +369,21 @@ fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
     let strCoeff = "\ncoeff=INTEGER:0x".to_owned()+&power.to_string_radix(16);
     f.write_all(strCoeff.as_bytes()).expect("Error: Unable to write data");
     f.write_all("\n".as_bytes()).expect("Error: Unable to write data");
+
+    println!("Running auxiliary script on key values to reconstruct key");
+    let mut cmd = Command::new("bash");
+    cmd.arg("aux_tools/keyRegen.sh");
+    cmd.arg("recreation.txt");
+    cmd.arg("rsa.key");
+    match cmd.output() {
+        Ok(o) => {
+            unsafe{
+                println!("{}", String::from_utf8_unchecked(o.stdout));
+                println!("The RSA private key has been saved to rsa.key");
+            }
+        }
+        Err(e) => {
+            println!("Error");
+        }
+    }
 }
