@@ -31,7 +31,8 @@ fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        println!("Usage: cargo run <rsa-file>");
+        println!("Usage: cargo run <rsa-file>\n");
+        println!("For more functionality: cargo run help");
         return Ok(());
     }
 
@@ -40,7 +41,14 @@ fn main() -> Result<(), io::Error> {
     
     match args[1].as_ref() {
         "help" => {
-
+            println!("Tetanus uses Batch-GCD to find vulnerable RSA keys in a given pool. Once vulnerable keys are found, Tetanus can reconstruct the private key.\n");
+            println!("cargo run <file>: will run batch-GCD on given file of moduli\n");
+            println!("cargo run recreate <file> <line>: recreates private key from given line of a file\n\t\t\t\t\t(using the line number from file.vuln)");
+            println!("cargo run help: brings up this screen\n");
+            println!("cargo run benchmark <file>: times 50 trials of Batch-GCD on given file\n");
+            println!("cargo run test: proves Batch-GCD supplies correct values\n");
+            println!("cargo run keyTest: proves RSA private key is successfully reconstructed\n");
+            return Ok(());
         }
         "test" => {
             // Input: [1909,2923,291,205,989,62,451,1943,1079,2419]
@@ -82,24 +90,30 @@ fn main() -> Result<(), io::Error> {
             return Ok(());
         }        
         "recreate" => {
+            println!("You must have openssl installed for this module to run successfully");
             match args.len(){
                 4 => {
+                    // sets iterator, line number, and e variables
                     let i:i32 = 1;
                     let line = &args[3].parse::<i32>().unwrap();
                     let e = "10001";
                     println!("Creating RSA private key from line {} and e {}", line, e);
 
+                    // opens .vuln file to get n
                     let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
                     let mut buf = String::new();
                     let mut nbuf = BufReader::new(n);
                     nbuf.read_line(&mut buf);
+                    // moves buffer to line specified by user
                     for i in 0..*line {
                         buf.clear();
                         nbuf.read_line(&mut buf);
                     }
                     buf.pop();
+                    // creates variable of type &str that references number in buffer
                     let mut strN:&str = &buf;
 
+                    // does the same as above but for the .gcd file to get p
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
                     let mut buf2 = String::new();
                     let mut pbuf = BufReader::new(p);
@@ -111,28 +125,33 @@ fn main() -> Result<(), io::Error> {
                     buf2.pop();
                     let mut strP:&str = &buf2;
 
+                    // runs recreate_rsa on obtained n and p with an e of 0x10001
                     recreate_rsa(&strN, &strP, e);
 
                     return Ok(());
                 }
                 5 => {
+                    // sets iterator, line number, and e variables
                     let i:i32 = 1;
                     let line = &args[3].parse::<u32>().unwrap();
                     let e = &args[4];
                     println!("Creating RSA private key from line {} and e {}", line, e);
 
-
+                    // opens .vuln file to get n
                     let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
                     let mut buf = String::new();
                     let mut nbuf = BufReader::new(n);
                     nbuf.read_line(&mut buf);
+                    // moves buffer to line specified by user
                     for i in 0..*line {
                         buf.clear();
                         nbuf.read_line(&mut buf);
                     }
                     buf.pop();
+                    // creates variable of type &str that references number in buffer
                     let mut strN:&str = &buf;
 
+                    // does the same as above but for the .gcd file to get p
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
                     let mut buf2 = String::new();
                     let mut pbuf = BufReader::new(p);
@@ -144,6 +163,7 @@ fn main() -> Result<(), io::Error> {
                     buf2.pop();
                     let mut strP:&str = &buf2;
 
+                    // runs recreate_rsa on obtained n and p and user specified e
                     recreate_rsa(&strN, &strP, e);
                       
                     return Ok(());
@@ -157,8 +177,10 @@ fn main() -> Result<(), io::Error> {
         }
 
         "keyTest" => {
+            println!("You must have openssl installed for this module to run successfully");
             println!("Testing key regen with hardcoded values...");
             recreate_rsa("b089029fe0b4b5b785fef2bbae1d650d7ffc72cde478739174a589f660b3092f2a2f943afe593bd0be5165c947aa5769e6180b1e5bd7ed5ae6471621d9a7c321a266b591de3dddb080359025933b9a9dd8e5ddb38ee5c6dbb12dba59ae8fd36eab9376be2a2bcd78809706a7abda3e915d61c3d313ee8d4e84fd5cc73e25f1a9", "d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9","10001");
+            println!("This key can be tested for validity with the keypair found in ./aux_tools/8gwifikeys");
             return Ok(());
         }
         _ => {
@@ -366,26 +388,31 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     let mut f = File::create("recreation.txt").expect("Error: Unable to create file");
     println!("Creating file recreation.txt to write key values to");
 
+    // writes first 3 lines to recreation file
     f.write_all("asn1=SEQUENCE:private_key\n".as_bytes()).expect("Error: Unable to write data");
     f.write_all("[private_key]\n".as_bytes()).expect("Error: Unable to write data");
     f.write_all("version=INTEGER:0\n".as_bytes()).expect("Error: Unable to write data");
 
+    // creates new variables of type Integer
     let mut n = Integer::new();
     let mut p = Integer::new();
     let mut q = Integer::new();
     let mut e = Integer::new();
 
+    // assigns values to Integers
     n.assign(Integer::parse_radix(stringN, 16).unwrap());
     p.assign(Integer::parse_radix(stringP, 16).unwrap());
     q.assign(Integer::parse_radix(stringP, 16).unwrap());
     e.assign(Integer::parse_radix(encryption, 16).unwrap());
 
+    // creates 3 Integers containing 1 so they can be used to subtract one from above Integers later
   	let mut phi=Integer::from(1);
   	let mut p2=Integer::from(1);
   	let mut q2=Integer::from(1);
 
+    // q = n/q
   	q.div_from(&n);
- 	e.add_from(0);
+ 	//e.add_from(0);
 
     let strN = "n=INTEGER:0x".to_owned()+&n.to_string_radix(16);
     f.write_all(strN.as_bytes()).expect("Error: Unable to write data");
@@ -393,11 +420,13 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     let strE = "\ne=INTEGER:0x".to_owned()+&e.to_string_radix(16);
     f.write_all(strE.as_bytes()).expect("Error: Unable to write data");
 
+    // p2 and q2 are p-1 and q-1.  phi is (p-1)*(q-1)
   	phi.sub_from(&p);
   	p2.sub_from(&p);
   	q2.sub_from(&q);
     phi.mul_from(&q2);
     let mut d=Integer::from(e);
+    // d is e invert mod phi
     d.invert_mut(&phi);
 
     let strD = "\nd=INTEGER:0x".to_owned()+&d.to_string_radix(16);
@@ -408,6 +437,7 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     let strQ = "\nq=INTEGER:0x".to_owned()+&q.to_string_radix(16);
     f.write_all(strQ.as_bytes()).expect("Error: Unable to write data");
   	
+    // d mod p2 and d mod q2 to create exponent 1 and 2
   	p2.rem_from(&d);
   	q2.rem_from(&d);
     let strP2 = "\nexp1=INTEGER:0x".to_owned()+&p2.to_string_radix(16);
@@ -415,12 +445,14 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     let strQ2 = "\nexp2=INTEGER:0x".to_owned()+&q2.to_string_radix(16);
     f.write_all(strQ2.as_bytes()).expect("Error: Unable to write data");
 
+    // the coefficient is (inverse q) mod p
   	let expo = Integer::from(-1);
   	let power = q.pow_mod(&expo, &p).unwrap();
     let strCoeff = "\ncoeff=INTEGER:0x".to_owned()+&power.to_string_radix(16);
     f.write_all(strCoeff.as_bytes()).expect("Error: Unable to write data");
     f.write_all("\n".as_bytes()).expect("Error: Unable to write data");
 
+    // runs bash script in aux_tools to reconstruct private key
     println!("Running auxiliary script on key values to reconstruct key");
     let mut cmd = Command::new("bash");
     cmd.arg("aux_tools/keyRegen.sh");
@@ -437,6 +469,7 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
             println!("Error");
         }
     }
+    // disclaimer: p and q could be mixed up
     println!("\nNote: there is a change the p and q values were mixed up.");
     println!("If the private key does not seem to work, try dividing the number in");
     println!("moduli.vuln by the number on the corresponding line of moduli.gcd.");
