@@ -1,6 +1,13 @@
 # Tetanus
 A Private Key Cracker written in Rust.
 
+# Installation
+Tetanus was created to be run in a macOS or Linux environment.
+
+## OpenSSL
+For the key recreation module to work, openssl must be installed. 
+It can be installed with `sudo apt-get install openssl` for Ubuntu and `sudo pacman -S openssl` for Arch.
+
 ## Installing Rust on Linux / MacOS
 
 Just run this:
@@ -13,6 +20,12 @@ curl https://sh.rustup.rs -sSf | sh
 Download the windows installer found [here](https://www.rust-lang.org/tools/install), and install with default configuration settings.
 
 ## Building and Running the Project
+
+```
+cargo run --release help
+```
+For info on how to run Tetanus.
+
 ### Batch GCD on a given set of moduli
 Make sure your moduli file contains endline separated hexidecimal moduli. simply run with
 ```
