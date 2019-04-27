@@ -17,17 +17,18 @@
  */
 
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, LineWriter};
+use std::io::{self, BufRead, BufReader, LineWriter, Write, Error};
 use std::io::prelude::*;
 use std::env;
-use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, DivFrom, AddFrom, RemFrom}}; // big numbers
+use std::process::Command;
+use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, AddFrom, RemFrom}}; // big numbers
 use std::time::SystemTime;
 use std::cmp::Ordering;
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() != 2 {
+    if args.len() < 2 {
         println!("Usage: cargo run <rsa-file>");
         return Ok(());
     }
@@ -35,6 +36,9 @@ fn main() -> Result<(), io::Error> {
     let mut input_keys: Vec<String> = Vec::new();
     
     match args[1].as_ref() {
+        "help" => {
+
+        }
         "test" => {
             // Input: [1909,2923,291,205,989,62,451,1943,1079,2419]
             // Output should be: [1909, 1, 1, 41, 23, 1, 41, 1, 83, 41]
@@ -67,16 +71,21 @@ fn main() -> Result<(), io::Error> {
         }
         
         "recreate" => {
+            println!("in recreate");
             match args.len(){
                 3 => {
                     let n = File::open(&args[2])?;
                     let pq = File::open(&args[3])?;
                     let e = "65537";
+                    println!("3 args");
+                    return Ok(());
                 }
                 4 => {
                     let n = File::open(&args[2])?;
                     let pq = File::open(&args[3])?;
-                    let e = File::open(&args[4])?;    
+                    let e = File::open(&args[4])?;
+                    println!("could specify e");    
+                    return Ok(());
                 }
                 _ => {
                     println!("Usage: cargo run recreate <vuln_file> <gcd_file> <optional: e (default is 65537)>");
@@ -85,11 +94,9 @@ fn main() -> Result<(), io::Error> {
             }
         }
 
-
-
-
         "keyTest" => {
-            recreate_rsa("11188362659372101913143600898790338707758740049843802890931946943107055234385758698849161576315330979620837055455145878854722494334358352587330793293173497", "11080015406779644339409731862039601570861802205893016182187929091539065741756090484445311749297668806636032643408484361306512552183278449827508244448251953","65537");
+           // println!("Testing key regen with hardcoded values...");
+            recreate_rsa("d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9", "d38dfcb671f1a880b9457de540c6bd2ba4c2eba55139d51d6696ddd2f4306343496de72a01a45bbf302b7585ab631fe09ea223e155b7a4fd4578cb8bde2f9031","10001");
             return Ok(());
         }
         _ => {
@@ -260,48 +267,61 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
 }
 
 fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
-    println!("asn1=SEQUENCE:private_key");
-    println!("[private_key]");
-    println!("version=INTEGER:0");
+    let mut f = File::create("recreation.txt").expect("Error: Unable to create file");
+//    let mut cmd = Command::new();
 
-	  let mut n = Integer::new();
-	  let mut p = Integer::new();
-	  let mut q = Integer::new();
-	  let mut e = Integer::new();
+    f.write_all("asn1=SEQUENCE:private_key\n".as_bytes()).expect("Error: Unable to write data");
+    f.write_all("[private_key]\n".as_bytes()).expect("Error: Unable to write data");
+    f.write_all("version=INTEGER:0\n".as_bytes()).expect("Error: Unable to write data");
 
-	  n.assign(Integer::parse(stringP).unwrap());
-	  p.assign(Integer::parse(stringP).unwrap());
-	  q.assign(Integer::parse(stringQ).unwrap());
-	  e.assign(Integer::parse(encryption).unwrap());
+    let mut n = Integer::new();
+    let mut p = Integer::new();
+    let mut q = Integer::new();
+    let mut e = Integer::new();
+
+    n.assign(Integer::parse_radix(stringP, 16).unwrap());
+    p.assign(Integer::parse_radix(stringP, 16).unwrap());
+    q.assign(Integer::parse_radix(stringQ, 16).unwrap());
+    e.assign(Integer::parse_radix(encryption, 16).unwrap());
 
   	let mut phi=Integer::from(1);
   	let mut p2=Integer::from(1);
   	let mut q2=Integer::from(1);
 
   	n.mul_from(&q);
- 	  e.add_from(0);
+ 	e.add_from(0);
 
- 	  println!("n=INTEGER:0x{:x}", n);
-  	println!("e=INTEGER:0x{:x}", e);
+    let strN = "n=INTEGER:0x".to_owned()+&n.to_string_radix(16);
+    f.write_all(strN.as_bytes()).expect("Error: Unable to write data");
+
+    let strE = "\ne=INTEGER:0x".to_owned()+&e.to_string_radix(16);
+    f.write_all(strE.as_bytes()).expect("Error: Unable to write data");
 
   	phi.sub_from(&p);
   	p2.sub_from(&p);
   	q2.sub_from(&q);
- 	  phi.mul_from(&q2);
-	  let mut d=Integer::from(e);
-	  d.invert_mut(&phi);
+    phi.mul_from(&q2);
+    let mut d=Integer::from(e);
+    d.invert_mut(&phi);
 
-	  println!("d=INTEGER:0x{:x}", d);
+    let strD = "\nd=INTEGER:0x".to_owned()+&d.to_string_radix(16);
+    f.write_all(strD.as_bytes()).expect("Error: Unable to write data");
 
-	  println!("p=INTEGER:0x{:x}", p);
-  	println!("q=INTEGER:0x{:x}", q);
+    let strP = "\np=INTEGER:0x".to_owned()+&p.to_string_radix(16);
+    f.write_all(strP.as_bytes()).expect("Error: Unable to write data");
+    let strQ = "\nq=INTEGER:0x".to_owned()+&q.to_string_radix(16);
+    f.write_all(strQ.as_bytes()).expect("Error: Unable to write data");
   	
   	p2.rem_from(&d);
   	q2.rem_from(&d);
-  	println!("exp1=INTEGER:0x{:x}", p2);
-  	println!("exp2=INTEGER:0x{:x}", q2);
+    let strP2 = "\nexp1=INTEGER:0x".to_owned()+&p2.to_string_radix(16);
+    f.write_all(strP2.as_bytes()).expect("Error: Unable to write data");
+    let strQ2 = "\nexp2=INTEGER:0x".to_owned()+&q2.to_string_radix(16);
+    f.write_all(strQ2.as_bytes()).expect("Error: Unable to write data");
 
   	let expo = Integer::from(-1);
   	let power = q.pow_mod(&expo, &p).unwrap();
-  	println!("coeff=INTEGER:0x{:x}", power);
+    let strCoeff = "\ncoeff=INTEGER:0x".to_owned()+&power.to_string_radix(16);
+    f.write_all(strCoeff.as_bytes()).expect("Error: Unable to write data");
+    f.write_all("\n".as_bytes()).expect("Error: Unable to write data");
 }

@@ -1,9 +1,0 @@
-p=0x00d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9
-q=0x00d38dfcb671f1a880b9457de540c6bd2ba4c2eba55139d51d6696ddd2f4306343496de72a01a45bbf302b7585ab631fe09ea223e155b7a4fd4578cb8bde2f9031
-
-print("prime1 p in decimal")
-print(p)
-print
-print("prime2 q in decimal")
-print(q)
-print
