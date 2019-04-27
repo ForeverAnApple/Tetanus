@@ -21,7 +21,7 @@ use std::io::{self, BufRead, BufReader, LineWriter, Write, Error};
 use std::io::prelude::*;
 use std::env;
 use std::process::Command;
-use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, AddFrom, RemFrom}}; // big numbers
+use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, AddFrom, RemFrom, DivFrom}}; // big numbers
 use std::time::SystemTime;
 use std::cmp::Ordering;
 use std::time::Duration;
@@ -82,24 +82,37 @@ fn main() -> Result<(), io::Error> {
             return Ok(());
         }        
         "recreate" => {
-            println!("in recreate");
             match args.len(){
-                3 => {
-                    let n = File::open(&args[2])?;
-                    let pq = File::open(&args[3])?;
-                    let e = "65537";
-                    println!("3 args");
+                4 => {
+                    let line = &args[3];
+                    let e = "10001";
+
+                    let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
+                    let nbuf = BufReader::new(n);
+                    let mut cursor = io::Cursor::new(nbuf);
+                    let mut buf = String::new();
+                    //let num_bytes = cursor.read_line(&mut buf);
+
+                    let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
+                    let pbuf = BufReader::new(p);
+                    
                     return Ok(());
                 }
-                4 => {
-                    let n = File::open(&args[2])?;
-                    let pq = File::open(&args[3])?;
-                    let e = File::open(&args[4])?;
-                    println!("could specify e");    
+                5 => {
+                    let line = &args[3];
+                    let e = &args[4];
+
+                    let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
+                    let nbuf = BufReader::new(n);
+
+                    let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
+                    let pbuf = BufReader::new(p);
+                      
                     return Ok(());
                 }
                 _ => {
-                    println!("Usage: cargo run recreate <vuln_file> <gcd_file> <optional: e (default is 65537)>");
+                    println!("Usage: cargo run recreate <file> <line from file> <optional: e (default is 0x10001)>");
+                    println!("(file refers to the file that has already been run through tetanus)", );
                     return Ok(());
                 }
             }
@@ -107,7 +120,7 @@ fn main() -> Result<(), io::Error> {
 
         "keyTest" => {
             println!("Testing key regen with hardcoded values...");
-            recreate_rsa("d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9", "d38dfcb671f1a880b9457de540c6bd2ba4c2eba55139d51d6696ddd2f4306343496de72a01a45bbf302b7585ab631fe09ea223e155b7a4fd4578cb8bde2f9031","10001");
+            recreate_rsa("b089029fe0b4b5b785fef2bbae1d650d7ffc72cde478739174a589f660b3092f2a2f943afe593bd0be5165c947aa5769e6180b1e5bd7ed5ae6471621d9a7c321a266b591de3dddb080359025933b9a9dd8e5ddb38ee5c6dbb12dba59ae8fd36eab9376be2a2bcd78809706a7abda3e915d61c3d313ee8d4e84fd5cc73e25f1a9", "d59f93d6e5a6ce24d0d463666dc2bfd5be5d214ef4da29a40c15ffdf92030dc4c6599288a1b86ed64e90aaf6aae2310e7067cd6dbf35cac41ab980ee5f2352f9","10001");
             return Ok(());
         }
         _ => {
@@ -311,7 +324,7 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
     bgcd
 }
 
-fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
+fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     let mut f = File::create("recreation.txt").expect("Error: Unable to create file");
     println!("Creating file recreation.txt to write key values to");
 
@@ -324,16 +337,16 @@ fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
     let mut q = Integer::new();
     let mut e = Integer::new();
 
-    n.assign(Integer::parse_radix(stringP, 16).unwrap());
+    n.assign(Integer::parse_radix(stringN, 16).unwrap());
     p.assign(Integer::parse_radix(stringP, 16).unwrap());
-    q.assign(Integer::parse_radix(stringQ, 16).unwrap());
+    q.assign(Integer::parse_radix(stringP, 16).unwrap());
     e.assign(Integer::parse_radix(encryption, 16).unwrap());
 
   	let mut phi=Integer::from(1);
   	let mut p2=Integer::from(1);
   	let mut q2=Integer::from(1);
 
-  	n.mul_from(&q);
+  	q.div_from(&n);
  	e.add_from(0);
 
     let strN = "n=INTEGER:0x".to_owned()+&n.to_string_radix(16);
@@ -386,4 +399,8 @@ fn recreate_rsa(mut stringP:&str, mut stringQ:&str, mut encryption:&str) {
             println!("Error");
         }
     }
+    println!("\nNote: there is a change the p and q values were mixed up.");
+    println!("If the private key does not seem to work, try dividing the number in");
+    println!("moduli.vuln by the number on the corresponding line of moduli.gcd.");
+    println!("Replace the line in moduli.gcd with the result (in hex) and run again.");
 }
