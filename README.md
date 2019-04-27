@@ -17,8 +17,13 @@ The command `cargo run help` will briefly explain each module of the program.
 
 TL;DR
 `curl https://sh.rustup.rs -sSf | sh`
+
 `sudo apt-get install openssl -y`
+
 `git clone https://github.com/ForeverAnApple/Tetanus.git`
+
 `cd Tetanus`
+
 `cargo run --release`
+
 `cargo run help`
