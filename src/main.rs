@@ -87,6 +87,7 @@ fn main() -> Result<(), io::Error> {
                     let i:i32 = 1;
                     let line = &args[3].parse::<i32>().unwrap();
                     let e = "10001";
+                    println!("Creating RSA private key from line {} and e {}", line, e);
 
                     let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
                     let mut buf = String::new();
@@ -96,7 +97,7 @@ fn main() -> Result<(), io::Error> {
                         buf.clear();
                         nbuf.read_line(&mut buf);
                     }
-                    println!("{:?}\n\n", buf);
+                    buf.pop();
 
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
                     let mut buf2 = String::new();
@@ -106,7 +107,9 @@ fn main() -> Result<(), io::Error> {
                         buf.clear();
                         pbuf.read_line(&mut buf2);
                     }
+                    buf2.pop();
                     println!("{:?}", buf2);
+                    //recreate_rsa(buf, buf2, e);
 
                     return Ok(());
                 }
@@ -114,6 +117,30 @@ fn main() -> Result<(), io::Error> {
                     let i:i32 = 1;
                     let line = &args[3].parse::<u32>().unwrap();
                     let e = &args[4];
+                    println!("Creating RSA private key from line {} and e {}", line, e);
+
+
+                    let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
+                    let mut buf = String::new();
+                    let mut nbuf = BufReader::new(n);
+                    nbuf.read_line(&mut buf);
+                    for i in 0..*line {
+                        buf.clear();
+                        nbuf.read_line(&mut buf);
+                    }
+                    buf.pop();
+
+                    let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
+                    let mut buf2 = String::new();
+                    let mut pbuf = BufReader::new(p);
+                    pbuf.read_line(&mut buf2);
+                    for i in 0..*line {
+                        buf.clear();
+                        pbuf.read_line(&mut buf2);
+                    }
+                    buf2.pop();
+
+                    //recreate_rsa(buf, buf2, e);
                       
                     return Ok(());
                 }
