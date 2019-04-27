@@ -16,6 +16,7 @@ Once you have cloned this repository, cd to Tetanus and run `cargo run` to start
 The command `cargo run help` will briefly explain each module of the program.
 
 TL;DR
+
 `curl https://sh.rustup.rs -sSf | sh`
 
 `sudo apt-get install openssl -y`
