@@ -9,6 +9,7 @@
 \usepackage[margin=0.7in]{geometry}
 \usepackage{comment}
 \usepackage{wrapfig}
+\usepackage[demo]{graphicx}
 
 \algrenewcommand\Return{\State \algorithmicreturn{} }%
 
@@ -31,11 +32,12 @@ Let's quickly go over RSA, how it is possible to break it. RSA is usually crypto
 This means it is possible to perform Man In the Middle attacks against the cracked RSA Private Key target. Decrypt TLS encrypted traffic, or even authenticate SSH using the public key as well. Essentially, you become your target.
 
 \section{Batch GCD}
+
 \begin{wrapfigure}{r}{0.5\textwidth}
   \begin{center}
     \includegraphics[width=0.48\textwidth]{batch-gcd-tree.png}
   \end{center}
-  \caption{The Batch GCD Trees and how they're created and used.}
+  \caption{The Batch GCD Trees, being created and used.}
 \end{wrapfigure}
 
 Batch GCD is split into 3 main components: creation of the product tree, creation of the remainder tree, and finally, the GCD process.
@@ -49,10 +51,15 @@ Batch GCD is split into 3 main components: creation of the product tree, creatio
   Finally, for each moduli, find the GCD between each number on the final layer of the remainder tree divide by the modulus and the modulus itself.
 \end{enumerate}
 
+The complexity of Batch-GCD is $O(n(\lg{n})^2 \lg{\lg{n}})$ for the entire process.
+
 \section{Experimental Setup}
-We have collected about 22,000 keys all together from 2 main sources for this project. First, we grabbed a datadump of about 10,000 moduli from 
+We have collected about 22,000 keys all together from 2 main sources for this project. First, we grabbed a datadump of about 10,000 moduli from a 2016 scan containing vulnerable moduli off the internet. Next, using a in-house tool tScanner, which performs TLS Handshakes with HTTPS servers to extract the certificate. Then, it extracts the public componet $N$ for Tetanus to attempt Batch-GCD cracking. The 12,000 keys were collected from about 2 entire days of scanning on one computer. The moduli are output by tScanner are all uniq, since duplicate moduli could raise a false positive for Tetanus.\\
+\\
+All moduli and gcd are saved and processed in hex. Within Rust, we used the Rug crate for arbitrary large number processing and math operations. The benchmark process is done on a single thread of an Intel i5-7200U (3.1 GHz), and 8 GB of ram with 8 GB of swap on SSD. 
 \section{Results}
 
 \section{Conclusions}
+Batch-GCD works better with more keys, since there will be a higher chance of finding a GCD. However, network, memory, and storage is an issue; we simply just don't have enough time and resources to do a check of the entire IPv4 range.
 
 \end{document}
