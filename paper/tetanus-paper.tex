@@ -19,12 +19,9 @@
 
 \begin{document}
 \maketitle
-\begin{abstract}
 
-\end{abstract}
-
-\section{Background and Related Work}
-
+\section{Abstract}
+RSA is a widely used system for modern public key cryptography. It can be extremely secure, but there are several ways in which it can be implemented poorly. One such way is through weak generation of keys. This can happen when the seed used in the generation of the keys is not entirely random, which is the weakness that our program exploits. If several keys have the same seed, it is possible to deduce one of the prime numbers contained in the private key from the public key.  From there, it is possible to recreate the entire private key that should never be seen by the public in a strong implementation of RSA.
 
 \section{RSA}
 Let's quickly go over RSA, how it is possible to break it. RSA is usually cryptographically secure due to the complexity and difficulty to factor very, very large prime numbers. However, within the Public Component of RSA contains $N$, a result of the product between two (usually) large primes $p$ and $q$. However, if one could efficiently calcualte $p$ and $q$ from $N$, then it will be possible to reconstruct a RSA Private key. \\
