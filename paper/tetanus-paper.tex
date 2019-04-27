@@ -68,6 +68,6 @@ All moduli and gcd are saved and processed in hex. Within Rust, we used the Rug 
 \end{figure}
 
 \section{Conclusions}
-Batch-GCD works better with more keys, since there will be a higher chance of finding a GCD. However, network, memory, and storage is an issue; we simply just don't have enough time and resources to do a check of the entire IPv4 range.
+Batch-GCD works better with more keys, since there will be a higher chance of finding a GCD. However, network, memory, and storage is an issue; we simply just don't have enough time and resources to do a check of the entire IPv4 range. Once vulnerable keys are found, it is quick and easy to recreate the private key. Since it is not certain whether p or q is returned by Batch-GCD there are two possible private keys to reconstruct for each vulnerable key. Judging from the difference in the number of vulnerable keys found via the 2016 scan versus our 2019 scan there are fewer vulnerable keys in the world today. This is somewhat thanks to other exploits that have forced people to update their systems, but there are still several keys in the world that are vulnerable to the Batch-GCD attack.
 
 \end{document}
