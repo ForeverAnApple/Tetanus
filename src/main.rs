@@ -45,7 +45,7 @@ fn main() -> Result<(), io::Error> {
             println!("cargo run <file>: will run batch-GCD on given file of moduli\n");
             println!("cargo run recreate <file> <line>: recreates private key from given line of a file\n\t\t\t\t\t(using the line number from file.vuln)");
             println!("cargo run help: brings up this screen\n");
-            println!("cargo run benchmark <file>: times 50 trials of Batch-GCD on given file\n");
+            println!("cargo run benchmark <file>: runs 50 trials of Batch-GCD on given file with stats\n");
             println!("cargo run test: proves Batch-GCD supplies correct values\n");
             println!("cargo run keyTest: proves RSA private key is successfully reconstructed\n");
             return Ok(());
