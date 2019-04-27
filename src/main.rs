@@ -12,7 +12,7 @@
  * Tetanus - A Batch-GCD RSA Cracker.
  *
  * Daiwei Chen, Cole Houston
- * 2019-04-16
+ * 2019-04-26
  * Check LICENSE for licensing information.
  */
 
@@ -24,6 +24,8 @@ use std::process::Command;
 use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, AddFrom, RemFrom}}; // big numbers
 use std::time::SystemTime;
 use std::cmp::Ordering;
+use std::time::Duration;
+use rand::Rng;
 
 fn main() -> Result<(), io::Error> {
     let args: Vec<String> = env::args().collect();
@@ -34,6 +36,7 @@ fn main() -> Result<(), io::Error> {
     }
 
     let mut input_keys: Vec<String> = Vec::new();
+    let mut rug_keys: Vec<Integer> = Vec::new();
     
     match args[1].as_ref() {
         "help" => {
@@ -48,7 +51,6 @@ fn main() -> Result<(), io::Error> {
             println!("Testing keys: {:?}", input_keys);
 
             // Load all the hex keys into rug
-            let mut rug_keys: Vec<Integer> = Vec::new();
             for key in &input_keys{
                 let mut parsed = Integer::new();
                 parsed.assign(Integer::parse_radix(key, 16).unwrap());
@@ -63,13 +65,22 @@ fn main() -> Result<(), io::Error> {
             return Ok(());
         }
         "benchmark" => {
-            println!("Starting Benchmark...");
-
+            if args.len() != 3 {
+                println!("Usage: cargo run benchmark <moduli file>");
+                return Ok(());
+            }
             
+            println!("Starting Benchmark...");
+            let benches = vec![1000, 2500, 5000, 7500, 10000, 15000, 20000];
+            let times = benchmark(&benches, &args[2]);
+            println!("=============================");
+            println!("Results for n and t (in seconds)");
+            for (b, t) in benches.iter().zip(&times) {
+                println!("n:\t{}\tt:\t{}", b, t);
+            }
             
             return Ok(());
-        }
-        
+        }        
         "recreate" => {
             println!("in recreate");
             match args.len(){
@@ -100,24 +111,14 @@ fn main() -> Result<(), io::Error> {
             return Ok(());
         }
         _ => {
-            // the ? syntax is like a try catch loop, it's similar to the rust macro try!()
-            // Using a BufReader in case of very large files
-            let file = File::open(&args[1])?;
-            let buf = BufReader::new(file);
-            input_keys = buf.lines().map(|l| l.unwrap()).collect();
-            println!("\nLoaded {} keys from {}.", input_keys.len(), &args[1]);
+            // https://github.com/rust-lang/rfcs/pull/2649 Come on rust, you can do it.
+            // (input_keys, rug_keys) = load_from_file(&args[1]).unwrap();
+            let results = load_from_file(&args[1]).unwrap();
+            input_keys = results.0;
+            rug_keys = results.1;
         }
     }
     
-    // Load all the hex keys into rug
-    let mut rug_keys: Vec<Integer> = Vec::new();
-    for key in &input_keys{
-        let mut parsed = Integer::new();
-        parsed.assign(Integer::parse_radix(key, 16).unwrap());
-        // println!("Parsing {} into {:?}", key, &parsed);
-        rug_keys.push(parsed);
-    }
-
     //println!("Beginning modulus: {:?}", rug_keys);
     let start = SystemTime::now();
     let bgcd = analyze(&rug_keys, false);
@@ -136,13 +137,57 @@ fn main() -> Result<(), io::Error> {
     Ok(())
 }
 
-// This function takes in a vector of Ns to randomly generate n numbers to benchmark batch-gcd
-fn benchmark(Ns: &Vec<i32>) -> Vec<i32> {
-    let mut benches: Vec<i32> = Vec::new();
+fn load_from_file(fname: &String) -> Result<(Vec<String>, Vec<Integer>), io::Error> {
+    let mut input_keys: Vec<String> = Vec::new();
     
+    // the ? syntax is like a try catch loop, it's similar to the rust macro try!()
+    // Using a BufReader in case of very large files
+    let file = File::open(fname)?;
+    let buf = BufReader::new(file);
+    input_keys = buf.lines().map(|l| l.unwrap()).collect();
+    println!("\nLoaded {} keys from {}.", input_keys.len(), fname);
+    
+    // Load all the hex keys into rug
+    let mut rug_keys: Vec<Integer> = Vec::new();
+    for key in &input_keys{
+        let mut parsed = Integer::new();
+        parsed.assign(Integer::parse_radix(key, 16).unwrap());
+        // println!("Parsing {} into {:?}", key, &parsed);
+        rug_keys.push(parsed);
+    }
+
+    Ok((input_keys, rug_keys))
+}
+
+// This function takes in a vector of Ns to randomly generate n numbers to benchmark batch-gcd
+fn benchmark(Ns: &Vec<i32>, fname: &String) -> Vec<f64> {
+    let trials = 50;
+    let mut random = rand::thread_rng();
+    let mut benches: Vec<f64> = Vec::new();
+    let mut rand_nums: Vec<Integer> = Vec::new();
+    let (input_keys, rug_keys) = load_from_file(fname).unwrap();
+
     for n in Ns {
-        let mut rand_hexes: Vec<String> = Vec::new();
-        
+        rand_nums = Vec::new();
+        println!("Testing {} moduli", *n);
+        for i in 0..*n {
+            rand_nums.push(rug_keys[random.gen_range(0, &rug_keys.len())].clone());
+        }
+        let mut trial_times: Vec<Duration> = Vec::new();
+        for i in 0..trials {
+            println!("Starting trial {} for n: {}", i, n);
+            let start = SystemTime::now();
+            let bgcd = analyze(&rand_nums, false);
+            let time_taken = start.elapsed().unwrap();
+            println!("Trial {} for n: {} took {} seconds", i, n,
+                     time_taken.as_secs() as f64 + time_taken.subsec_nanos() as f64 * 1e-9);
+            trial_times.push(time_taken);
+        }
+        let time_sum: f64 = trial_times
+            .iter()
+            .map(|&x| x.as_secs() as f64 + x.subsec_nanos() as f64 * 1e-9)
+            .sum();
+        benches.push(time_sum / trials as f64);
     }
 
     benches
