@@ -17,11 +17,11 @@
  */
 
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, LineWriter, Write, Error};
+use std::io::{self, BufRead, BufReader, LineWriter, Write};
 use std::io::prelude::*;
 use std::env;
 use std::process::Command;
-use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, AddFrom, RemFrom, DivFrom}}; // big numbers
+use rug::{Assign, Integer, ops::{Pow, MulFrom, SubFrom, RemFrom, DivFrom}}; // big numbers
 use std::time::SystemTime;
 use std::cmp::Ordering;
 use std::time::Duration;
@@ -90,7 +90,7 @@ fn main() -> Result<(), io::Error> {
             return Ok(());
         }        
         "recreate" => {
-            println!("You must have openssl installed for this module to run successfully");
+            println!("Note: You must have openssl installed for this module to run successfully\n");
             match args.len(){
                 4 => {
                     // sets iterator, line number, and e variables
@@ -111,7 +111,7 @@ fn main() -> Result<(), io::Error> {
                     }
                     buf.pop();
                     // creates variable of type &str that references number in buffer
-                    let mut strN:&str = &buf;
+                    let strN:&str = &buf;
 
                     // does the same as above but for the .gcd file to get p
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
@@ -123,7 +123,7 @@ fn main() -> Result<(), io::Error> {
                         pbuf.read_line(&mut buf2);
                     }
                     buf2.pop();
-                    let mut strP:&str = &buf2;
+                    let strP:&str = &buf2;
 
                     // runs recreate_rsa on obtained n and p with an e of 0x10001
                     recreate_rsa(&strN, &strP, e);
@@ -149,7 +149,7 @@ fn main() -> Result<(), io::Error> {
                     }
                     buf.pop();
                     // creates variable of type &str that references number in buffer
-                    let mut strN:&str = &buf;
+                    let strN:&str = &buf;
 
                     // does the same as above but for the .gcd file to get p
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
@@ -161,7 +161,7 @@ fn main() -> Result<(), io::Error> {
                         pbuf.read_line(&mut buf2);
                     }
                     buf2.pop();
-                    let mut strP:&str = &buf2;
+                    let strP:&str = &buf2;
 
                     // runs recreate_rsa on obtained n and p and user specified e
                     recreate_rsa(&strN, &strP, e);
@@ -384,7 +384,7 @@ fn batch_gcd(rem_tree: &Vec<Integer>, keys: &Vec<Integer>) -> Vec<Integer> {
     bgcd
 }
 
-fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
+fn recreate_rsa(stringN:&str, stringP:&str, encryption:&str) {
     let mut f = File::create("recreation.txt").expect("Error: Unable to create file");
     println!("Creating file recreation.txt to write key values to");
 
@@ -414,11 +414,11 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
   	q.div_from(&n);
  	//e.add_from(0);
 
-    let strN = "n=INTEGER:0x".to_owned()+&n.to_string_radix(16);
-    f.write_all(strN.as_bytes()).expect("Error: Unable to write data");
+    let str_N = "n=INTEGER:0x".to_owned()+&n.to_string_radix(16);
+    f.write_all(str_N.as_bytes()).expect("Error: Unable to write data");
 
-    let strE = "\ne=INTEGER:0x".to_owned()+&e.to_string_radix(16);
-    f.write_all(strE.as_bytes()).expect("Error: Unable to write data");
+    let str_E = "\ne=INTEGER:0x".to_owned()+&e.to_string_radix(16);
+    f.write_all(str_E.as_bytes()).expect("Error: Unable to write data");
 
     // p2 and q2 are p-1 and q-1.  phi is (p-1)*(q-1)
   	phi.sub_from(&p);
@@ -429,27 +429,27 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     // d is e invert mod phi
     d.invert_mut(&phi);
 
-    let strD = "\nd=INTEGER:0x".to_owned()+&d.to_string_radix(16);
-    f.write_all(strD.as_bytes()).expect("Error: Unable to write data");
+    let str_D = "\nd=INTEGER:0x".to_owned()+&d.to_string_radix(16);
+    f.write_all(str_D.as_bytes()).expect("Error: Unable to write data");
 
-    let strP = "\np=INTEGER:0x".to_owned()+&p.to_string_radix(16);
-    f.write_all(strP.as_bytes()).expect("Error: Unable to write data");
-    let strQ = "\nq=INTEGER:0x".to_owned()+&q.to_string_radix(16);
-    f.write_all(strQ.as_bytes()).expect("Error: Unable to write data");
+    let str_P = "\np=INTEGER:0x".to_owned()+&p.to_string_radix(16);
+    f.write_all(str_P.as_bytes()).expect("Error: Unable to write data");
+    let str_Q = "\nq=INTEGER:0x".to_owned()+&q.to_string_radix(16);
+    f.write_all(str_Q.as_bytes()).expect("Error: Unable to write data");
   	
     // d mod p2 and d mod q2 to create exponent 1 and 2
   	p2.rem_from(&d);
   	q2.rem_from(&d);
-    let strP2 = "\nexp1=INTEGER:0x".to_owned()+&p2.to_string_radix(16);
-    f.write_all(strP2.as_bytes()).expect("Error: Unable to write data");
-    let strQ2 = "\nexp2=INTEGER:0x".to_owned()+&q2.to_string_radix(16);
-    f.write_all(strQ2.as_bytes()).expect("Error: Unable to write data");
+    let str_P2 = "\nexp1=INTEGER:0x".to_owned()+&p2.to_string_radix(16);
+    f.write_all(str_P2.as_bytes()).expect("Error: Unable to write data");
+    let str_Q2 = "\nexp2=INTEGER:0x".to_owned()+&q2.to_string_radix(16);
+    f.write_all(str_Q2.as_bytes()).expect("Error: Unable to write data");
 
     // the coefficient is (inverse q) mod p
   	let expo = Integer::from(-1);
   	let power = q.pow_mod(&expo, &p).unwrap();
-    let strCoeff = "\ncoeff=INTEGER:0x".to_owned()+&power.to_string_radix(16);
-    f.write_all(strCoeff.as_bytes()).expect("Error: Unable to write data");
+    let str_coeff = "\ncoeff=INTEGER:0x".to_owned()+&power.to_string_radix(16);
+    f.write_all(str_coeff.as_bytes()).expect("Error: Unable to write data");
     f.write_all("\n".as_bytes()).expect("Error: Unable to write data");
 
     // runs bash script in aux_tools to reconstruct private key
@@ -470,7 +470,7 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
         }
     }
     // disclaimer: p and q could be mixed up
-    println!("\nNote: there is a change the p and q values were mixed up.");
+    println!("\nNote: there is a chance the p and q values were mixed up.");
     println!("If the private key does not seem to work, try dividing the number in");
     println!("moduli.vuln by the number on the corresponding line of moduli.gcd.");
     println!("Replace the line in moduli.gcd with the result (in hex) and run again.");
