@@ -20,7 +20,9 @@ paper/*.fls
 paper/*.gz
 paper/*.fdb_latexmk
 paper/*.pdf
-
+paper/#*
+paper/.#*
+  
 *.swp
 
 # Please don't send this 166.2 MB file lmao
