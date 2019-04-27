@@ -84,29 +84,36 @@ fn main() -> Result<(), io::Error> {
         "recreate" => {
             match args.len(){
                 4 => {
-                    let line = &args[3];
+                    let i:i32 = 1;
+                    let line = &args[3].parse::<i32>().unwrap();
                     let e = "10001";
 
                     let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
-                    let nbuf = BufReader::new(n);
-                    let mut cursor = io::Cursor::new(nbuf);
                     let mut buf = String::new();
-                    //let num_bytes = cursor.read_line(&mut buf);
+                    let mut nbuf = BufReader::new(n);
+                    nbuf.read_line(&mut buf);
+                    for i in 0..*line {
+                        buf.clear();
+                        nbuf.read_line(&mut buf);
+                    }
+                    println!("{:?}\n\n", buf);
 
                     let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
-                    let pbuf = BufReader::new(p);
-                    
+                    let mut buf2 = String::new();
+                    let mut pbuf = BufReader::new(p);
+                    pbuf.read_line(&mut buf2);
+                    for i in 0..*line {
+                        buf.clear();
+                        pbuf.read_line(&mut buf2);
+                    }
+                    println!("{:?}", buf2);
+
                     return Ok(());
                 }
                 5 => {
-                    let line = &args[3];
+                    let i:i32 = 1;
+                    let line = &args[3].parse::<u32>().unwrap();
                     let e = &args[4];
-
-                    let n = File::open((&args[2] as &str).to_owned()+".vuln")?;
-                    let nbuf = BufReader::new(n);
-
-                    let p = File::open((&args[2] as &str).to_owned()+".gcd")?;
-                    let pbuf = BufReader::new(p);
                       
                     return Ok(());
                 }
