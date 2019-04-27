@@ -20,8 +20,9 @@
 \begin{document}
 \maketitle
 
-\section{Abstract}
+\begin{abstract}
 RSA is a widely used system for modern public key cryptography. It can be extremely secure, but there are several ways in which it can be implemented poorly. One such way is through weak generation of keys. This can happen when the seed used in the generation of the keys is not entirely random, which is the weakness that our program exploits. If several keys have the same seed, it is possible to deduce one of the prime numbers contained in the private key from the public key.  From there, it is possible to recreate the entire private key that should never be seen by the public in a strong implementation of RSA.
+\end{abstract}
 
 \section{RSA}
 Let's quickly go over RSA, how it is possible to break it. RSA is usually cryptographically secure due to the complexity and difficulty to factor very, very large prime numbers. However, within the Public Component of RSA contains $N$, a result of the product between two (usually) large primes $p$ and $q$. However, if one could efficiently calcualte $p$ and $q$ from $N$, then it will be possible to reconstruct a RSA Private key. \\
@@ -60,13 +61,12 @@ We have collected about 22,000 keys all together from 2 main sources for this pr
 All moduli and gcd are saved and processed in hex. Within Rust, we used the Rug crate for arbitrary large number processing and math operations. The benchmark process is done on a single thread of an Intel i5-7200U (3.1 GHz), and 8 GB of ram with 8 GB of swap on SSD. 
 
 \section{Results}
-\begin{wrapfigure}{r}{0.5\textwidth}
+\begin{figure}[htp]
   \begin{center}
-    \includegraphics[width=0.48\textwidth]{batch-gcd-time.png}
+    \includegraphics{batch-gcd-time.png}
+    \caption{Results for n and t (in seconds)}
   \end{center}
-  \caption{Results for n and t (in seconds)}
-\end{wrapfigure}
-\\
+\end{figure}
 
 \section{Conclusions}
 Batch-GCD works better with more keys, since there will be a higher chance of finding a GCD. However, network, memory, and storage is an issue; we simply just don't have enough time and resources to do a check of the entire IPv4 range.
