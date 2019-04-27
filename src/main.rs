@@ -453,7 +453,7 @@ fn recreate_rsa(mut stringN:&str, mut stringP:&str, mut encryption:&str) {
     f.write_all("\n".as_bytes()).expect("Error: Unable to write data");
 
     // runs bash script in aux_tools to reconstruct private key
-    println!("Running auxiliary script on key values to reconstruct key");
+    println!("Running auxiliary bash script on key values to reconstruct key");
     let mut cmd = Command::new("bash");
     cmd.arg("aux_tools/keyRegen.sh");
     cmd.arg("recreation.txt");
