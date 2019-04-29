@@ -47,5 +47,13 @@ cargo run --release test
 To run a hardcoded test of Batch-GCD with outputs for product tree, remainder tree, and final gcd process.
 
 ### Key Test
+```
+cargo run keyTest
+```
+This will create a private key using the modulus and e values found in the public key from the aux_tools/8gwifikeys/ directory. The p value has been taken from the private key in the same directory to make recreation possible without a vulnerable key.
 
 ### Key Reconstruction
+```
+cargo run recreate <moduli file> <line> <optional: e (default=0x10001)>
+``` 
+The recreate module will take an input file that Batch-GCD has been run on (so that the .vuln and .gcd extensions of that file are in the same directory) and recreate a private key from it. The line number (applies to line number in .vuln file) from which the n and p variables are taken is specified in the next parameter. The e variable is usually 0x10001, but if it is different than this simply specify that difference in the final parameter. If you do not know the e value but think it may not be 0x10001, run `python aux_tools/extract.py <public key>`.
