@@ -1,7 +1,7 @@
 [package]
 name = "tetanus"
 version = "1.0.0"
-authors = ["Daiwei Chen <kinbd8@gmail.com>"]
+authors = ["Daiwei Chen <kinbd8@gmail.com>", "Cole Houston <colehouston44@gmail.com>"]
 edition = "2018"
 
 [dependencies]
